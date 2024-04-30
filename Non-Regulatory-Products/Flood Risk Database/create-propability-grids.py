@@ -34,13 +34,18 @@ def set_environment(workspace, overwrite, snap_raster, extent, cell_size):
 
 # Calculate DEM above different Water Surface Elevations (WSE)
 def create_dem_above_wse(dem, more_frequent_wse, less_frequent_wse, output_raster_name):
-    #dem_raster = sa.Raster(dem)
-    #more_frequent_wse_raster = sa.Raster(more_frequent_wse)
-    #less_frequent_wse_raster = sa.Raster(less_frequent_wse)
-    expression = 'Con((dem <= less_frequent_wse) & (dem > more_frequent_wse), Power(10.0, Log10(0.01)+(dem - more_frequent_wse)*(Log10(0.002)-Log10(0.01))/(less_frequent_wse-more_frequent_wse)))'
-    #expression = 'Con(({0} <= {2}) & ({0} > {1}), Power(10.0, Log10(0.01)+({0} - {1})*(Log10(0.002)-Log10(0.01))/({2}-{1})))'.format(dem_raster,more_frequent_wse_raster,less_frequent_wse_raster)
-    arcpy.gp.RasterCalculator_sa(expression,output_raster_name)
-    #output_raster.save(output_raster_name)
+    # Ensure all inputs are Raster objects
+    dem_raster = sa.Raster(dem)
+    more_frequent_wse_raster = sa.Raster(more_frequent_wse)
+    less_frequent_wse_raster = sa.Raster(less_frequent_wse)
+
+    # Perform conditional operation using arcpy.sa
+    result_raster = sa.Con((dem_raster <= less_frequent_wse_raster) & (dem_raster > more_frequent_wse_raster),
+                           sa.Power(10.0, sa.Log10(0.01) + (dem_raster - more_frequent_wse_raster) * 
+                           (sa.Log10(0.002) - sa.Log10(0.01)) / (less_frequent_wse_raster - more_frequent_wse_raster)))
+
+    # Save the result
+    result_raster.save(output_raster_name)
     return output_raster_name
 
 # Combine the output rasters into a single raster using Cell Statistics
