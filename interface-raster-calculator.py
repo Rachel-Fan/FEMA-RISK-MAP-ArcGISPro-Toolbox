@@ -32,14 +32,18 @@ merge_terain_Clip = sa.Raster(arcpy.GetParameterAsText(0))
 FY19_WSE_100YR_clip = sa.Raster(arcpy.GetParameterAsText(1))
 FY19_WSE_500YR_clip = sa.Raster(arcpy.GetParameterAsText(2))
 
+# Set environment settings
+arcpy.env.snapRaster = merge_terain_Clip
+arcpy.env.cellSize = merge_terain_Clip
+arcpy.env.mask = FY19_WSE_500YR_clip
 
+# Calculate the expression using arcpy.sa functions
+cond_result = sa.Con((merge_terain_Clip <= FY19_WSE_500YR_clip) & (merge_terain_Clip > FY19_WSE_100YR_clip),
+                     sa.Power(10.0, sa.Log10(0.01) + (merge_terain_Clip - FY19_WSE_100YR_clip) *
+                              (sa.Log10(0.002) - sa.Log10(0.01)) / (FY19_WSE_500YR_clip - FY19_WSE_100YR_clip)))
 
-output_raster = r"C:\Users\rfan\Documents\ArcGIS\Tools\FRD_DAGs\Clip_Data_test\ToolTest.gdb\DEM_above_01PCT_standalone"
+# Save the output
+output_raster_path = r"C:\Users\rfan\Documents\ArcGIS\Tools\FRD_DAGs\Clip_Data_test\ToolTest.gdb\DEM_above_01PCT_standalone"
+cond_result.save(output_raster_path)
 
-with arcpy.EnvManager(snapRaster=merge_terain_Clip, cellSize=merge_terain_Clip, mask=FY19_WSE_500YR_clip):
-    expression='Con((merge_terain_Clip  <=  FY19_WSE_500YR_clip)  &  (merge_terain_Clip  >  FY19_WSE_100YR_clip), Power(10.0, Log10(0.01)+(merge_terain_Clip - FY19_WSE_100YR_clip)*(Log10(0.002)-Log10(0.01))/(FY19_WSE_500YR_clip-FY19_WSE_100YR_clip)))'
-    arcpy.gp.RasterCalculator_sa(expression,output_raster)
-
-
-
-print('output_raster is saved at ', output_raster)
+print('Output raster is saved at', output_raster_path)
