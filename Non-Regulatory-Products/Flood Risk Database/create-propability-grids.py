@@ -56,15 +56,29 @@ def combine_raster(input_rasters, output_combined_raster):
 
 # Create Percentage Annual Chance Raster
 def create_pct_ann_chance(input_raster, output_raster_name):
-    expression = 'RoundDown({} * 100.0 * 10.0 + 0.5) / 10.0'.format(input_raster)
-    pct_ann_chance = sa.RasterCalculator(expression)
+    # Ensure input is a Raster object
+    input_raster_obj = sa.Raster(input_raster)
+    
+    # Calculate the percentage annual chance
+    pct_ann_chance = sa.RoundDown(input_raster_obj * 1000.0 + 0.5) / 10.0
+    
+    # Save the result
     pct_ann_chance.save(output_raster_name)
+    return output_raster_name
+
 
 # Create Percentage 30-year Chance Raster
 def create_pct_30yr_chance(input_raster, output_raster_name):
-    expression = 'RoundDown((1.0 - Power(1.0 - {}, 30)) * 100.0 * 10.0 + 0.5) / 10.0'.format(input_raster)
-    pct_30yr_chance = sa.RasterCalculator(expression)
+    # Ensure input is a Raster object
+    input_raster_obj = sa.Raster(input_raster)
+    
+    # Calculate the 30-year chance
+    pct_30yr_chance = sa.RoundDown((1.0 - sa.Power(1.0 - input_raster_obj, 30)) * 1000.0 + 0.5) / 10.0
+    
+    # Save the result
     pct_30yr_chance.save(output_raster_name)
+    return output_raster_name
+
 
 # Main function
 def main(workspace, dem, wse_list, output_gdb):
