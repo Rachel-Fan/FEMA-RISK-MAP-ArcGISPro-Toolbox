@@ -33,20 +33,81 @@ def set_environment(workspace, overwrite, snap_raster, extent, cell_size):
     arcpy.env.cellSize = cell_size
 
 # Calculate DEM above different Water Surface Elevations (WSE)
-def create_dem_above_wse(dem, more_frequent_wse, less_frequent_wse, output_raster_name):
+def create_dem_above_01PCT(dem, WSE_100YR, WSE_500YR, dem_above_01PCT):
     # Ensure all inputs are Raster objects
     dem_raster = sa.Raster(dem)
-    more_frequent_wse_raster = sa.Raster(more_frequent_wse)
-    less_frequent_wse_raster = sa.Raster(less_frequent_wse)
+    WSE_100YR_raster = sa.Raster(WSE_100YR)
+    WSE_500YR_raster = sa.Raster(WSE_500YR)
 
     # Perform conditional operation using arcpy.sa
-    result_raster = sa.Con((dem_raster <= less_frequent_wse_raster) & (dem_raster > more_frequent_wse_raster),
-                           sa.Power(10.0, sa.Log10(0.01) + (dem_raster - more_frequent_wse_raster) * 
-                           (sa.Log10(0.002) - sa.Log10(0.01)) / (less_frequent_wse_raster - more_frequent_wse_raster)))
+    result_raster = sa.Con((dem_raster <= WSE_500YR_raster) & (dem_raster > WSE_100YR_raster),
+                           sa.Power(10.0, sa.Log10(0.01) + (dem_raster - WSE_100YR_raster) * 
+                           (sa.Log10(0.002) - sa.Log10(0.01)) / (WSE_500YR_raster - WSE_100YR_raster)))
 
     # Save the result
-    result_raster.save(output_raster_name)
-    return output_raster_name
+    result_raster.save(dem_above_01PCT)
+    return dem_above_01PCT
+
+# Calculate DEM above different Water Surface Elevations (WSE)
+def create_dem_above_02PCT(dem, WSE_50YR, WSE_100YR, dem_above_02PCT):
+    # Ensure all inputs are Raster objects
+    dem_raster = sa.Raster(dem)
+    WSE_50YR_raster = sa.Raster(WSE_50YR)
+    WSE_100YR_raster = sa.Raster(WSE_100YR)
+
+    # Perform conditional operation using arcpy.sa
+    result_raster = sa.Con((dem_raster <= WSE_100YR_raster) & (dem_raster > WSE_50YR_raster),
+                           sa.Power(10.0, sa.Log10(0.02) + (dem_raster - WSE_50YR_raster) * 
+                           (sa.Log10(0.01) - sa.Log10(0.02)) / (WSE_100YR_raster - WSE_50YR_raster)))
+
+    # Save the result
+    result_raster.save(dem_above_02PCT)
+    return dem_above_02PCT
+
+# Calculate DEM above different Water Surface Elevations (WSE)
+def create_dem_above_04PCT(dem, WSE_25YR, WSE_50YR, dem_above_04PCT):
+    # Ensure all inputs are Raster objects
+    dem_raster = sa.Raster(dem)
+    WSE_25YR_raster = sa.Raster(WSE_25YR)
+    WSE_50YR_raster = sa.Raster(WSE_50YR)
+
+    # Perform conditional operation using arcpy.sa
+    result_raster = sa.Con((dem_raster <= WSE_50YR_raster) & (dem_raster > WSE_25YR_raster),
+                           sa.Power(10.0, sa.Log10(0.04) + (dem_raster - WSE_25YR_raster) * 
+                           (sa.Log10(0.02) - sa.Log10(0.04)) / (WSE_50YR_raster - WSE_25YR_raster)))
+
+    # Save the result
+    result_raster.save(dem_above_04PCT)
+    return dem_above_04PCT
+
+# Calculate DEM above different Water Surface Elevations (WSE)
+def create_dem_above_10PCT(dem, WSE_10YR, WSE_25YR, dem_above_10PCT):
+    # Ensure all inputs are Raster objects
+    dem_raster = sa.Raster(dem)
+    WSE_10YR_raster = sa.Raster(WSE_10YR)
+    WSE_25YR_raster = sa.Raster(WSE_25YR)
+
+    # Perform conditional operation using arcpy.sa
+    result_raster = sa.Con((dem_raster <= WSE_25YR_raster) & (dem_raster > WSE_10YR_raster),
+                           sa.Power(10.0, sa.Log10(0.10) + (dem_raster - WSE_10YR_raster) * 
+                           (sa.Log10(0.04) - sa.Log10(0.10)) / (WSE_25YR_raster - WSE_10YR_raster)))
+
+    # Save the result
+    result_raster.save(dem_above_10PCT)
+    return dem_above_10PCT
+
+# Calculate DEM above different Water Surface Elevations (WSE)
+def create_dem_above_WSE(dem, WSE_10YR, dem_above_WSE):
+    # Ensure all inputs are Raster objects
+    dem_raster = sa.Raster(dem)
+    WSE_10YR_raster = sa.Raster(WSE_10YR)
+    
+    # Perform conditional operation using arcpy.sa
+    result_raster = sa.Con(dem_raster <= WSE_10YR_raster, 0.10 )
+
+    # Save the result
+    result_raster.save(dem_above_WSE)
+    return dem_above_WSE
 
 # Combine the output rasters into a single raster using Cell Statistics
 def combine_raster(input_rasters, output_combined_raster):
@@ -105,7 +166,13 @@ if __name__ == "__main__":
     arcpy.AddMessage("Starting processing...")
     workspace = arcpy.GetParameterAsText(0)
     dem = sa.Raster(arcpy.GetParameterAsText(1))
-    wse_list = [sa.Raster(arcpy.GetParameterAsText(i)) for i in range(2, 7)]  # Assuming 5 WSE inputs
+    WSE_10YR = sa.Raster(arcpy.GetParameterAsText(2))
+    WSE_25YR = sa.Raster(arcpy.GetParameterAsText(3))
+    WSE_50YR = sa.Raster(arcpy.GetParameterAsText(4))
+    WSE_100YR = sa.Raster(arcpy.GetParameterAsText(5))
+    WSE_500YR = sa.Raster(arcpy.GetParameterAsText(6))
+    
+    #wse_list = [sa.Raster(arcpy.GetParameterAsText(i)) for i in range(2, 7)]  # Assuming 5 WSE inputs
     output_gdb = arcpy.GetParameterAsText(7)
     
     arcpy.AddMessage(dem)
