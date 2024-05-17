@@ -144,22 +144,31 @@ def create_pct_30yr_chance(input_raster, output_raster_name):
 # Main function
 def main(workspace, dem, wse_list, output_gdb):
     check_extension()
-    set_environment(workspace, True, dem, wse_list[-1], dem)  # Setting environment with the least frequent WSE as extent
+    set_environment(workspace, True, dem, wse_values['WSE_500YR'], dem)  # Setting environment with the least frequent WSE as extent
 
-    output_rasters = []
-    for i in range(len(wse_list)-1):
-        output_raster_name = os.path.join(output_gdb, f"DEMaboveWSE_{i}")
-        output_rasters.append(create_dem_above_wse(dem, wse_list[i], wse_list[i+1], output_raster_name))
+    # Calculate DEM above different WSE
+    dem_above_01PCT = create_dem_above_01PCT(dem, wse_values['WSE_100YR'], wse_values['WSE_500YR'], os.path.join(output_gdb, "DEMabove01PCT"))
+    dem_above_02PCT = create_dem_above_02PCT(dem, wse_values['WSE_50YR'], wse_values['WSE_100YR'], os.path.join(output_gdb, "DEMabove02PCT"))
+    dem_above_04PCT = create_dem_above_04PCT(dem, wse_values['WSE_25YR'], wse_values['WSE_50YR'], os.path.join(output_gdb, "DEMabove04PCT"))
+    dem_above_10PCT = create_dem_above_10PCT(dem, wse_values['WSE_10YR'], wse_values['WSE_25YR'], os.path.join(output_gdb, "DEMabove10PCT"))
+    dem_above_WSE = create_dem_above_WSE(dem, wse_values['WSE_10YR'], os.path.join(output_gdb, "DEMaboveWSE"))
 
+    # List of all DEM results
+    output_rasters = [dem_above_01PCT, dem_above_02PCT, dem_above_04PCT, dem_above_10PCT, dem_above_WSE]
+
+    # Combine the output rasters into a single raster using Cell Statistics
     combined_raster_name = os.path.join(output_gdb, "combined_raster")
     temp_raster = combine_raster(output_rasters, combined_raster_name)
 
+    # Create percentage annual chance and 30-year chance rasters
     pct_ann_chance_raster = os.path.join(output_gdb, "PctAnnChance")
     create_pct_ann_chance(temp_raster, pct_ann_chance_raster)
 
     pct_30yr_chance_raster = os.path.join(output_gdb, "Pct30yrChance")
     create_pct_30yr_chance(temp_raster, pct_30yr_chance_raster)
+
     print('Processing completed.')
+
 
 # Command-line interface
 if __name__ == "__main__":
@@ -175,7 +184,14 @@ if __name__ == "__main__":
     #wse_list = [sa.Raster(arcpy.GetParameterAsText(i)) for i in range(2, 7)]  # Assuming 5 WSE inputs
     output_gdb = arcpy.GetParameterAsText(7)
     
-    arcpy.AddMessage(dem)
-    main(workspace, dem, wse_list, output_gdb)
-    arcpy.AddMessage("Done")
+    wse_values = {
+        'WSE_10YR': WSE_10YR,
+        'WSE_25YR': WSE_25YR,
+        'WSE_50YR': WSE_50YR,
+        'WSE_100YR': WSE_100YR,
+        'WSE_500YR': WSE_500YR
+    }
+
+    main(workspace, dem, output_gdb, wse_values)
+    arcpy.AddMessage("Process complete")
 
