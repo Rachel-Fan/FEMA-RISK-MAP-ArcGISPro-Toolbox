@@ -142,23 +142,29 @@ def create_pct_30yr_chance(input_raster, output_raster_name):
 
 
 # Main function
-def main(workspace, dem, wse_list, output_gdb):
+def main(workspace, dem, output_gdb):
     check_extension()
     set_environment(workspace, True, dem, wse_values['WSE_500YR'], dem)  # Setting environment with the least frequent WSE as extent
 
+    output_rasters = []
+    arcpy.AddMessage("output_gdb is ")
+    arcpy.AddMessage(output_gdb)
+    #output_path_01PCT = os.path.join(output_gdb,f"DEMabove01PCT")
     # Calculate DEM above different WSE
-    dem_above_01PCT = create_dem_above_01PCT(dem, wse_values['WSE_100YR'], wse_values['WSE_500YR'], os.path.join(output_gdb, "DEMabove01PCT"))
-    dem_above_02PCT = create_dem_above_02PCT(dem, wse_values['WSE_50YR'], wse_values['WSE_100YR'], os.path.join(output_gdb, "DEMabove02PCT"))
-    dem_above_04PCT = create_dem_above_04PCT(dem, wse_values['WSE_25YR'], wse_values['WSE_50YR'], os.path.join(output_gdb, "DEMabove04PCT"))
-    dem_above_10PCT = create_dem_above_10PCT(dem, wse_values['WSE_10YR'], wse_values['WSE_25YR'], os.path.join(output_gdb, "DEMabove10PCT"))
-    dem_above_WSE = create_dem_above_WSE(dem, wse_values['WSE_10YR'], os.path.join(output_gdb, "DEMaboveWSE"))
+    dem_above_WSE = create_dem_above_WSE(dem, wse_values['WSE_10YR'], os.path.join(output_gdb, f"DEMaboveWSE"))
+    arcpy.AddMessage("dem_above_WSE created")
+    output_rasters.append(create_dem_above_01PCT(dem, wse_values['WSE_100YR'], wse_values['WSE_500YR'],os.path.join(output_gdb, f"DEMabove01PCT"))
+    #output_rasters.append(create_dem_above_02PCT(dem, wse_values['WSE_50YR'], wse_values['WSE_100YR'],os.path.join(output_gdb, f"DEMabove02PCT"))
+    #output_rasters.append(create_dem_above_04PCT(dem, wse_values['WSE_25YR'], wse_values['WSE_50YR'],os.path.join(output_gdb, f"DEMabove04PCT"))
+    #output_rasters.append(create_dem_above_10PCT(dem, wse_values['WSE_10YR'], wse_values['WSE_25YR'],os.path.join(output_gdb, f"DEMabove10PCT"))
+    
 
     # List of all DEM results
-    output_rasters = [dem_above_01PCT, dem_above_02PCT, dem_above_04PCT, dem_above_10PCT, dem_above_WSE]
+    #output_rasters = [dem_above_01PCT, dem_above_02PCT, dem_above_04PCT, dem_above_10PCT, dem_above_WSE]
 
     # Combine the output rasters into a single raster using Cell Statistics
-    combined_raster_name = os.path.join(output_gdb, "combined_raster")
-    temp_raster = combine_raster(output_rasters, combined_raster_name)
+    combined_raster_name = os.path.join(output_gdb,combined_raster")
+    temp_raster = combine_raster(output_rasters,combined_raster_name)
 
     # Create percentage annual chance and 30-year chance rasters
     pct_ann_chance_raster = os.path.join(output_gdb, "PctAnnChance")
@@ -192,6 +198,5 @@ if __name__ == "__main__":
         'WSE_500YR': WSE_500YR
     }
 
-    main(workspace, dem, output_gdb, wse_values)
+    main(workspace, dem, output_gdb)
     arcpy.AddMessage("Process complete")
-
